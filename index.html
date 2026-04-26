@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CloudVault</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .upload-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin: 0 auto 20px auto;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .refresh-btn {
+            display: block;
+            margin: 10px auto;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            background: #2196F3;
+            color: white;
+        }
+
+        #fileList {
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 0;
+            list-style: none;
+        }
+
+        .file-item {
+            background: white;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .file-name {
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .open-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            margin-right: 8px;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>🚀 CloudVault</h2>
+
+    <!-- Upload box (unchanged logic) -->
+    <div class="upload-box">
+        <form action="http://localhost:3000/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" />
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+
+    <button class="refresh-btn" onclick="loadFiles()">Refresh Files</button>
+
+    <ul id="fileList"></ul>
+
+    <script>
+        async function loadFiles() {
+            const res = await fetch("http://localhost:3000/files");
+            const files = await res.json();
+
+            const list = document.getElementById("fileList");
+            list.innerHTML = "";
+
+            files.forEach(file => {
+                const li = document.createElement("li");
+                li.className = "file-item";
+
+                const name = document.createElement("div");
+                name.className = "file-name";
+                name.textContent = file;
+
+                // open button
+                const openBtn = document.createElement("button");
+                openBtn.className = "open-btn";
+                openBtn.textContent = "Open";
+                openBtn.onclick = () => {
+                    window.open(`http://localhost:3000/uploads/${file}`, "_blank");
+                };
+
+                // delete button
+                const delBtn = document.createElement("button");
+                delBtn.className = "delete-btn";
+                delBtn.textContent = "Delete";
+                delBtn.onclick = async () => {
+                    await fetch(`http://localhost:3000/delete/${file}`, {
+                        method: "DELETE"
+                    });
+
+                    loadFiles();
+                };
+
+                li.appendChild(name);
+                li.appendChild(openBtn);
+                li.appendChild(delBtn);
+
+                list.appendChild(li);
+            });
+        }
+
+        loadFiles();
+    </script>
+
+</body>
+
+</html>
