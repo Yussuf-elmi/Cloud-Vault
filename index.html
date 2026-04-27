@@ -3,25 +3,129 @@
 
 <head>
     <title>CloudVault</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef2f7;
+        }
+
+        /* Top bar */
+        .header {
+            background: #1a73e8;
+            color: white;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        /* Card sections */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            padding: 10px;
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .btn-blue {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-green {
+            background: #34a853;
+            color: white;
+        }
+
+        .btn-red {
+            background: #ea4335;
+            color: white;
+        }
+
+        /* File list */
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .file {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+
+        .file a {
+            text-decoration: none;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
-    <h2>🚀 CloudVault (Private Mode)</h2>
 
-    <!-- USERNAME -->
-    <input type="text" id="user" placeholder="Enter username" />
-    <button onclick="loadFiles()">Load My Files</button>
+    <div class="header">
+        🚀 CloudVault - Your Personal Drive
+    </div>
 
-    <br><br>
+    <div class="container">
 
-    <!-- UPLOAD -->
-    <input type="file" id="fileInput" />
-    <button onclick="uploadFile()">Upload</button>
+        <!-- USER -->
+        <div class="card">
+            <h3>👤 User</h3>
+            <input type="text" id="user" placeholder="Enter username (e.g. yussuf)" />
+            <button class="btn-blue" onclick="loadFiles()">Load My Files</button>
+        </div>
 
-    <h3>Your Files</h3>
-    <button onclick="loadFiles()">Refresh</button>
+        <!-- UPLOAD -->
+        <div class="card">
+            <h3>📤 Upload File</h3>
+            <input type="file" id="fileInput" />
+            <button class="btn-green" onclick="uploadFile()">Upload</button>
+        </div>
 
-    <ul id="fileList"></ul>
+        <!-- FILES -->
+        <div class="card">
+            <h3>📁 Your Files</h3>
+            <button class="btn-blue" onclick="loadFiles()">Refresh</button>
+            <ul id="fileList"></ul>
+        </div>
+
+    </div>
 
     <script>
         function getUser() {
@@ -31,6 +135,7 @@
         async function uploadFile() {
             const fileInput = document.getElementById("fileInput");
             const file = fileInput.files[0];
+
             if (!file) return alert("Select a file");
 
             const formData = new FormData();
@@ -56,6 +161,7 @@
 
             files.forEach(file => {
                 const li = document.createElement("li");
+                li.className = "file";
 
                 const link = document.createElement("a");
                 link.href = `/uploads/${user}/${file}`;
@@ -63,6 +169,7 @@
                 link.target = "_blank";
 
                 const btn = document.createElement("button");
+                btn.className = "btn-red";
                 btn.textContent = "Delete";
 
                 btn.onclick = async () => {
@@ -78,6 +185,7 @@
             });
         }
     </script>
+
 </body>
 
 </html>
