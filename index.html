@@ -3,121 +3,52 @@
 
 <head>
     <title>CloudVault</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #f4f6f8;
-            color: #333;
-        }
-
-        /* Header */
-        .header {
-            background: #1e88e5;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        /* Container */
-        .container {
-            max-width: 800px;
-            margin: 30px auto;
-            padding: 20px;
-        }
-
-        /* Upload box */
-        .upload-box {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        input[type="file"] {
-            margin: 10px 0;
-        }
-
-        button {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .upload-btn {
-            background: #1e88e5;
-            color: white;
-        }
-
-        .refresh-btn {
-            background: #43a047;
-            color: white;
-            margin: 10px 0;
-        }
-
-        /* File list */
-        #fileList {
-            list-style: none;
-            padding: 0;
-        }
-
-        .file-item {
-            background: white;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .file-item a {
-            text-decoration: none;
-            color: #1e88e5;
-            font-weight: bold;
-        }
-
-        .delete-btn {
-            background: #e53935;
-            color: white;
-        }
-    </style>
 </head>
 
 <body>
+    <h2>🚀 CloudVault (Private Mode)</h2>
 
-    <div class="header">
-        🚀 CloudVault - Your Personal Cloud Storage
-    </div>
+    <!-- USERNAME -->
+    <input type="text" id="user" placeholder="Enter username" />
+    <button onclick="loadFiles()">Load My Files</button>
 
-    <div class="container">
+    <br><br>
 
-        <!-- Upload -->
-        <div class="upload-box">
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-                <input type="file" name="file" required />
-                <br />
-                <button class="upload-btn" type="submit">Upload File</button>
-            </form>
-        </div>
+    <!-- UPLOAD -->
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload</button>
 
-        <button class="refresh-btn" onclick="loadFiles()">Refresh Files</button>
+    <h3>Your Files</h3>
+    <button onclick="loadFiles()">Refresh</button>
 
-        <ul id="fileList"></ul>
-
-    </div>
+    <ul id="fileList"></ul>
 
     <script>
+        function getUser() {
+            return document.getElementById("user").value || "guest";
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+            if (!file) return alert("Select a file");
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            await fetch(`/upload?user=${getUser()}`, {
+                method: "POST",
+                body: formData
+            });
+
+            fileInput.value = "";
+            loadFiles();
+        }
+
         async function loadFiles() {
-            const res = await fetch("/files");
+            const user = getUser();
+
+            const res = await fetch(`/files?user=${user}`);
             const files = await res.json();
 
             const list = document.getElementById("fileList");
@@ -125,19 +56,19 @@
 
             files.forEach(file => {
                 const li = document.createElement("li");
-                li.className = "file-item";
 
                 const link = document.createElement("a");
-                link.href = `/uploads/${file}`;
+                link.href = `/uploads/${user}/${file}`;
                 link.textContent = file;
                 link.target = "_blank";
 
                 const btn = document.createElement("button");
-                btn.className = "delete-btn";
                 btn.textContent = "Delete";
 
                 btn.onclick = async () => {
-                    await fetch(`/delete/${file}`, { method: "DELETE" });
+                    await fetch(`/delete/${file}?user=${user}`, {
+                        method: "DELETE"
+                    });
                     loadFiles();
                 };
 
@@ -146,10 +77,7 @@
                 list.appendChild(li);
             });
         }
-
-        loadFiles();
     </script>
-
 </body>
 
 </html>

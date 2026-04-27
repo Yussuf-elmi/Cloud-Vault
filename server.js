@@ -6,15 +6,24 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ensure uploads folder exists
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
+app.use(express.static(__dirname));
+
+// 👇 get username from query or body (simple version)
+function getUser(req) {
+  return req.query.user || "guest";
 }
 
-// storage config
+// 🔥 storage per user
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    const user = req.query.user || "guest";
+    const dir = `uploads/${user}`;
+
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
@@ -23,28 +32,26 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// serve uploaded files
-app.use("/uploads", express.static("uploads"));
-
-// serve homepage
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// upload route
+// upload route (user-based)
 app.post("/upload", upload.single("file"), (req, res) => {
-  res.redirect("/");
+  res.redirect(`/?user=${req.query.user || "guest"}`);
 });
 
-// list files
+// list files per user
 app.get("/files", (req, res) => {
-  const files = fs.readdirSync("uploads");
+  const user = getUser(req);
+  const dir = `uploads/${user}`;
+
+  if (!fs.existsSync(dir)) return res.json([]);
+
+  const files = fs.readdirSync(dir);
   res.json(files);
 });
 
-// delete file
+// delete file per user
 app.delete("/delete/:filename", (req, res) => {
-  const filePath = `uploads/${req.params.filename}`;
+  const user = getUser(req);
+  const filePath = `uploads/${user}/${req.params.filename}`;
 
   fs.unlink(filePath, (err) => {
     if (err) return res.status(500).send("Error deleting file");
@@ -52,7 +59,11 @@ app.delete("/delete/:filename", (req, res) => {
   });
 });
 
-// start server
+// homepage
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port " + PORT);
 });
