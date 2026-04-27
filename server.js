@@ -6,20 +6,12 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* -------------------- MIDDLEWARE -------------------- */
-app.use((req, res, next) => {
-  console.log("REQUEST:", req.method, req.url);
-  next();
-});
+// ensure uploads folder exists
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 
-/* Allow frontend to access backend */
-const cors = require("cors");
-app.use(cors());
-
-/* Serve uploaded files */
-app.use("/uploads", express.static("uploads"));
-
-/* -------------------- STORAGE CONFIG -------------------- */
+// storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -31,42 +23,36 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* -------------------- ROUTES -------------------- */
+// serve uploaded files
+app.use("/uploads", express.static("uploads"));
 
-/* Upload file */
-app.post("/upload", upload.single("file"), (req, res) => {
-  console.log("UPLOAD ROUTE HIT");
-  console.log(req.file);
-
-  res.send("File uploaded successfully");
+// serve homepage
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-/* List files */
+// upload route
+app.post("/upload", upload.single("file"), (req, res) => {
+  res.redirect("/");
+});
+
+// list files
 app.get("/files", (req, res) => {
   const files = fs.readdirSync("uploads");
   res.json(files);
 });
 
-/* Delete file */
+// delete file
 app.delete("/delete/:filename", (req, res) => {
-  const filePath = path.join(__dirname, "uploads", req.params.filename);
+  const filePath = `uploads/${req.params.filename}`;
 
   fs.unlink(filePath, (err) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).send("Error deleting file");
-    }
-
+    if (err) return res.status(500).send("Error deleting file");
     res.send("Deleted");
   });
 });
 
-/* Optional homepage */
-app.get("/", (req, res) => {
-  res.send("Mini Drive is running 🚀");
-});
-
-/* -------------------- START SERVER -------------------- */
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// start server
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Server running on port " + PORT);
 });
