@@ -50,11 +50,21 @@ app.get("/files", (req, res) => {
 
 // delete file per user
 app.delete("/delete/:filename", (req, res) => {
-  const user = getUser(req);
-  const filePath = `uploads/${user}/${req.params.filename}`;
+  const user = req.query.user || "guest";
+  const filename = req.params.filename;
+
+  const safeName = decodeURIComponent(filename);
+
+  const filePath = path.join(__dirname, "uploads", user, safeName);
+
+  console.log("Deleting:", filePath);
 
   fs.unlink(filePath, (err) => {
-    if (err) return res.status(500).send("Error deleting file");
+    if (err) {
+      console.log("Delete error:", err.message);
+      return res.status(500).send("Error deleting file");
+    }
+
     res.send("Deleted");
   });
 });

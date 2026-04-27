@@ -173,9 +173,10 @@
                 btn.textContent = "Delete";
 
                 btn.onclick = async () => {
-                    await fetch(`/delete/${file}?user=${user}`, {
+                    await fetch(`/delete/${encodeURIComponent(file)}?user=${getUser()}`, {
                         method: "DELETE"
                     });
+
                     loadFiles();
                 };
 
