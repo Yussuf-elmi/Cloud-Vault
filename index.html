@@ -5,6 +5,10 @@
     <title>CloudVault</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -19,6 +23,30 @@
             font-size: 20px;
             font-weight: bold;
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .btn-logout {
+            background: #ea4335;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-logout:hover {
+            background: #d33423;
         }
 
         /* Main container */
@@ -26,6 +54,13 @@
             max-width: 850px;
             margin: 30px auto;
             padding: 20px;
+        }
+
+        /* Auth container */
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
         }
 
         /* Card sections */
@@ -37,7 +72,15 @@
             margin-bottom: 20px;
         }
 
+        .auth-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
         input[type="text"],
+        input[type="password"],
         input[type="file"] {
             padding: 10px;
             width: 100%;
@@ -45,6 +88,15 @@
             margin-bottom: 10px;
             border-radius: 8px;
             border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
         }
 
         button {
@@ -54,6 +106,8 @@
             cursor: pointer;
             font-weight: bold;
             margin-top: 5px;
+            width: 100%;
+            font-size: 14px;
         }
 
         .btn-blue {
@@ -61,14 +115,36 @@
             color: white;
         }
 
+        .btn-blue:hover {
+            background: #1557b0;
+        }
+
         .btn-green {
             background: #34a853;
             color: white;
         }
 
+        .btn-green:hover {
+            background: #2d8e47;
+        }
+
         .btn-red {
             background: #ea4335;
             color: white;
+        }
+
+        .btn-red:hover {
+            background: #d33423;
+        }
+
+        .btn-secondary {
+            background: #f3f3f3;
+            color: #202124;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
         }
 
         /* File list */
@@ -92,99 +168,336 @@
             text-decoration: none;
             color: #1a73e8;
             font-weight: bold;
+            flex: 1;
+        }
+
+        .file a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #fcc;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #cfc;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .toggle-auth a {
+            color: #1a73e8;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .toggle-auth a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        h3 {
+            margin-top: 0;
+        }
+
+        .auth-title {
+            text-align: center;
+            color: #202124;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="header">
-         CloudVault - Your Personal Drive
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-container">
+        <div class="auth-card">
+            <h2 class="auth-title" id="authTitle">Login to CloudVault</h2>
+            <div id="authMessage"></div>
+
+            <input type="text" id="authUsername" placeholder="Username" />
+            <input type="password" id="authPassword" placeholder="Password" />
+
+            <button class="btn-blue" id="authBtn" onclick="handleAuth()">Login</button>
+            <button class="btn-secondary" onclick="toggleAuthMode()">Don't have an account? Register</button>
+
+            <div class="toggle-auth">
+                <small id="toggleText">New user? <a onclick="toggleAuthMode()">Create account</a></small>
+            </div>
+        </div>
     </div>
 
-    <div class="container">
-
-        <!-- USER -->
-        <div class="card">
-            <h3> User</h3>
-            <input type="text" id="user" placeholder="Enter username (e.g. yussuf)" />
-            <button class="btn-blue" onclick="loadFiles()">Load My Files</button>
+    <!-- Main App Screen (hidden until authenticated) -->
+    <div id="appScreen" class="hidden">
+        <div class="header">
+            <span>☁️ CloudVault - Your Personal Drive</span>
+            <div class="header-right">
+                <span id="currentUser"></span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
         </div>
 
-        <!-- UPLOAD -->
-        <div class="card">
-            <h3> Upload File</h3>
-            <input type="file" id="fileInput" />
-            <button class="btn-green" onclick="uploadFile()">Upload</button>
-        </div>
+        <div class="container">
 
-        <!-- FILES -->
-        <div class="card">
-            <h3> Your Files</h3>
-            <button class="btn-blue" onclick="loadFiles()">Refresh</button>
-            <ul id="fileList"></ul>
-        </div>
+            <!-- UPLOAD -->
+            <div class="card">
+                <h3>📤 Upload File</h3>
+                <div id="uploadMessage"></div>
+                <input type="file" id="fileInput" />
+                <button class="btn-green" onclick="uploadFile()">Upload</button>
+            </div>
 
+            <!-- FILES -->
+            <div class="card">
+                <h3>📁 Your Files</h3>
+                <button class="btn-blue" onclick="loadFiles()">Refresh</button>
+                <ul id="fileList"></ul>
+            </div>
+
+        </div>
     </div>
 
     <script>
-        function getUser() {
-            return document.getElementById("user").value || "guest";
+        let authMode = "login"; // "login" or "register"
+        let currentToken = localStorage.getItem("token");
+        let currentUsername = localStorage.getItem("username");
+
+        // Initialize
+        if (currentToken && currentUsername) {
+            verifyAuth();
+        }
+
+        function toggleAuthMode() {
+            authMode = authMode === "login" ? "register" : "login";
+            const title = document.getElementById("authTitle");
+            const btn = document.getElementById("authBtn");
+            const toggleText = document.getElementById("toggleText");
+
+            if (authMode === "register") {
+                title.textContent = "Create CloudVault Account";
+                btn.textContent = "Register";
+                toggleText.innerHTML = 'Already have an account? <a onclick="toggleAuthMode()">Login</a>';
+            } else {
+                title.textContent = "Login to CloudVault";
+                btn.textContent = "Login";
+                toggleText.innerHTML = 'New user? <a onclick="toggleAuthMode()">Create account</a>';
+            }
+
+            document.getElementById("authUsername").value = "";
+            document.getElementById("authPassword").value = "";
+            document.getElementById("authMessage").innerHTML = "";
+        }
+
+        async function handleAuth() {
+            const username = document.getElementById("authUsername").value.trim();
+            const password = document.getElementById("authPassword").value;
+            const endpoint = authMode === "login" ? "/api/login" : "/api/register";
+
+            const messageDiv = document.getElementById("authMessage");
+            messageDiv.innerHTML = "";
+
+            if (!username || !password) {
+                messageDiv.innerHTML = '<div class="error">Username and password are required</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    messageDiv.innerHTML = `<div class="error">${data.error}</div>`;
+                    return;
+                }
+
+                // Store token and username
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("username", data.username);
+                currentToken = data.token;
+                currentUsername = data.username;
+
+                // Show app screen
+                showAppScreen();
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function verifyAuth() {
+            try {
+                const response = await fetch("/api/verify", {
+                    headers: { "Authorization": `Bearer ${currentToken}` }
+                });
+
+                if (response.ok) {
+                    showAppScreen();
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                logout();
+            }
+        }
+
+        function showAppScreen() {
+            document.getElementById("authScreen").classList.add("hidden");
+            document.getElementById("appScreen").classList.remove("hidden");
+            document.getElementById("currentUser").textContent = `👤 ${currentUsername}`;
+            loadFiles();
         }
 
         async function uploadFile() {
             const fileInput = document.getElementById("fileInput");
             const file = fileInput.files[0];
+            const messageDiv = document.getElementById("uploadMessage");
+            messageDiv.innerHTML = "";
 
-            if (!file) return alert("Select a file");
+            if (!file) {
+                messageDiv.innerHTML = '<div class="error">Please select a file</div>';
+                return;
+            }
 
             const formData = new FormData();
             formData.append("file", file);
 
-            await fetch(`/upload?user=${getUser()}`, {
-                method: "POST",
-                body: formData
-            });
+            try {
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${currentToken}` },
+                    body: formData
+                });
 
-            fileInput.value = "";
-            loadFiles();
+                if (response.ok) {
+                    messageDiv.innerHTML = '<div class="success">✓ File uploaded successfully</div>';
+                    fileInput.value = "";
+                    loadFiles();
+                } else {
+                    const data = await response.json();
+                    messageDiv.innerHTML = `<div class="error">${data.error}</div>`;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="error">Upload failed: ${error.message}</div>`;
+            }
         }
 
         async function loadFiles() {
-            const user = getUser();
+            try {
+                const response = await fetch("/files", {
+                    headers: { "Authorization": `Bearer ${currentToken}` }
+                });
 
-            const res = await fetch(`/files?user=${user}`);
-            const files = await res.json();
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        logout();
+                    }
+                    return;
+                }
 
-            const list = document.getElementById("fileList");
-            list.innerHTML = "";
+                const files = await response.json();
+                const list = document.getElementById("fileList");
+                list.innerHTML = "";
 
-            files.forEach(file => {
-                const li = document.createElement("li");
-                li.className = "file";
+                if (files.length === 0) {
+                    list.innerHTML = "<li style='text-align: center; color: #999; padding: 20px;'>No files yet</li>";
+                    return;
+                }
 
-                const link = document.createElement("a");
-                link.href = `/uploads/${user}/${file}`;
-                link.textContent = file;
-                link.target = "_blank";
+                files.forEach(file => {
+                    const li = document.createElement("li");
+                    li.className = "file";
 
-                const btn = document.createElement("button");
-                btn.className = "btn-red";
-                btn.textContent = "Delete";
+                    const link = document.createElement("a");
+                    link.href = `/uploads/${currentUsername}/${file}`;
+                    link.textContent = file;
+                    link.target = "_blank";
 
-                btn.onclick = async () => {
-                    await fetch(`/delete/${encodeURIComponent(file)}?user=${getUser()}`, {
-                        method: "DELETE"
-                    });
+                    const btn = document.createElement("button");
+                    btn.className = "btn-red";
+                    btn.textContent = "Delete";
+                    btn.style.width = "80px";
+                    btn.style.marginTop = "0";
 
-                    loadFiles();
-                };
+                    btn.onclick = async () => {
+                        if (confirm("Delete this file?")) {
+                            await deleteFile(file);
+                        }
+                    };
 
-                li.appendChild(link);
-                li.appendChild(btn);
-                list.appendChild(li);
-            });
+                    li.appendChild(link);
+                    li.appendChild(btn);
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Error loading files:", error);
+            }
         }
+
+        async function deleteFile(filename) {
+            try {
+                const response = await fetch(`/delete/${encodeURIComponent(filename)}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${currentToken}` }
+                });
+
+                if (response.ok) {
+                    loadFiles();
+                } else {
+                    alert("Failed to delete file");
+                }
+            } catch (error) {
+                alert("Error deleting file: " + error.message);
+            }
+        }
+
+        async function logout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("username");
+            currentToken = null;
+            currentUsername = null;
+
+            // Reset auth form
+            document.getElementById("authUsername").value = "";
+            document.getElementById("authPassword").value = "";
+            document.getElementById("authMessage").innerHTML = "";
+            authMode = "login";
+            document.getElementById("authTitle").textContent = "Login to CloudVault";
+
+            // Show auth screen
+            document.getElementById("authScreen").classList.remove("hidden");
+            document.getElementById("appScreen").classList.add("hidden");
+        }
+
+        // Handle Enter key
+        document.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                if (!document.getElementById("authScreen").classList.contains("hidden")) {
+                    handleAuth();
+                }
+            }
+        });
     </script>
 
 </body>
